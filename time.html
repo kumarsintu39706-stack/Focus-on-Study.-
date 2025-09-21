@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Study Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        body.theme-red {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        body.theme-green {
+            background: linear-gradient(135deg, #55a3ff 0%, #003d82 100%);
+        }
+
+        body.theme-dark {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        }
+
+        body.theme-black {
+            background: linear-gradient(135deg, #000000 0%, #434343 100%);
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            transition: all 0.3s ease;
+        }
+
+        body.theme-black .container {
+            background: rgba(20, 20, 20, 0.95);
+            color: white;
+        }
+
+        body.theme-dark .container {
+            background: rgba(44, 62, 80, 0.95);
+            color: white;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        body.theme-black h1,
+        body.theme-dark h1 {
+            color: white;
+        }
+
+        .session-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+
+        body.theme-black .session-info,
+        body.theme-dark .session-info {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .session-counter, .session-type {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .timer-circle {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .circle-bg {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #4facfe 0%, #00f2fe 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .circle-bg.work {
+            background: conic-gradient(from 0deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .circle-bg.break {
+            background: conic-gradient(from 0deg, #55a3ff 0%, #003d82 100%);
+        }
+
+        .circle-inner {
+            width: 250px;
+            height: 250px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        body.theme-black .circle-inner,
+        body.theme-dark .circle-inner {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .time-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        body.theme-black .time-display,
+        body.theme-dark .time-display {
+            color: white;
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            fill: transparent;
+            stroke: rgba(255, 255, 255, 0.3);
+            stroke-width: 8;
+            stroke-dasharray: 942;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        .progress-ring-progress {
+            fill: transparent;
+            stroke: white;
+            stroke-width: 8;
+            stroke-dasharray: 942;
+            stroke-dashoffset: 942;
+            transition: stroke-dashoffset 1s linear;
+            stroke-linecap: round;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .btn-tertiary {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .settings {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        body.theme-black .settings,
+        body.theme-dark .settings {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .settings h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        body.theme-black .settings h3,
+        body.theme-dark .settings h3 {
+            color: white;
+        }
+
+        .setting-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .setting-group label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        body.theme-black .setting-group label,
+        body.theme-dark .setting-group label {
+            color: white;
+        }
+
+        .time-input {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        body.theme-black .time-input,
+        body.theme-dark .time-input {
+            background: #34495e;
+            border-color: #555;
+            color: white;
+        }
+
+        .theme-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .theme-btn {
+            width: 40px;
+            height: 40px;
+            border: 3px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-btn.active::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .theme-blue { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .theme-red { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+        .theme-green { background: linear-gradient(135deg, #55a3ff, #003d82); }
+        .theme-dark { background: linear-gradient(135deg, #2c3e50, #34495e); }
+        .theme-black { background: linear-gradient(135deg, #000000, #434343); }
+
+        .save-btn {
+            margin-top: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .timer-circle {
+                width: 250px;
+                height: 250px;
+            }
+            
+            .circle-inner {
+                width: 200px;
+                height: 200px;
+            }
+            
+            .time-display {
+                font-size: 2.5rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body class="theme-blue">
+    <div class="container">
+        <div class="header">
+            <h1>🍅 Pomodoro Timer</h1>
+        </div>
+
+        <div class="session-info">
+            <div class="session-counter">Session: <span id="sessionCount">1</span></div>
+            <div class="session-type">Mode: <span id="sessionType">Work</span></div>
+        </div>
+
+        <div class="timer-circle">
+            <svg class="progress-ring" width="300" height="300">
+                <circle class="progress-ring-circle" cx="150" cy="150" r="150"/>
+                <circle class="progress-ring-progress" cx="150" cy="150" r="150"/>
+            </svg>
+            <div class="circle-bg work">
+                <div class="circle-inner">
+                    <div class="time-display" id="timeDisplay">25:00</div>
+                    <div id="sessionLabel">Focus Time</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn">Start</button>
+            <button class="btn btn-secondary" id="pauseBtn" disabled>Pause</button>
+            <button class="btn btn-tertiary" id="resetBtn">Reset</button>
+        </div>
+
+        <div class="settings">
+            <h3>⚙️ Settings</h3>
+            
+            <div class="setting-group">
+                <label>Work Time (minutes):</label>
+                <input type="number" class="time-input" id="workTime" value="25" min="1" max="60">
+            </div>
+            
+            <div class="setting-group">
+                <label>Short Break (minutes):</label>
+                <input type="number" class="time-input" id="shortBreak" value="5" min="1" max="30">
+            </div>
+            
+            <div class="setting-group">
+                <label>Long Break (minutes):</label>
+                <input type="number" class="time-input" id="longBreak" value="15" min="10" max="30">
+            </div>
+
+            <div class="setting-group">
+                <label>Theme:</label>
+                <div class="theme-buttons">
+                    <div class="theme-btn theme-blue active" data-theme="blue"></div>
+                    <div class="theme-btn theme-red" data-theme="red"></div>
+                    <div class="theme-btn theme-green" data-theme="green"></div>
+                    <div class="theme-btn theme-dark" data-theme="dark"></div>
+                    <div class="theme-btn theme-black" data-theme="black"></div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary save-btn" id="saveBtn">💾 Save Settings</button>
+        </div>
+    </div>
+
+    <script>
+        class PomodoroTimer {
+            constructor() {
+                this.workTime = 25 * 60; // 25 minutes in seconds
+                this.shortBreakTime = 5 * 60; // 5 minutes in seconds
+                this.longBreakTime = 15 * 60; // 15 minutes in seconds
+                this.currentTime = this.workTime;
+                this.isRunning = false;
+                this.sessionCount = 1;
+                this.isWorkSession = true;
+                this.timerInterval = null;
+
+                this.elements = {
+                    timeDisplay: document.getElementById('timeDisplay'),
+                    sessionCount: document.getElementById('sessionCount'),
+                    sessionType: document.getElementById('sessionType'),
+                    sessionLabel: document.getElementById('sessionLabel'),
+                    startBtn: document.getElementById('startBtn'),
+                    pauseBtn: document.getElementById('pauseBtn'),
+                    resetBtn: document.getElementById('resetBtn'),
+                    workTimeInput: document.getElementById('workTime'),
+                    shortBreakInput: document.getElementById('shortBreak'),
+                    longBreakInput: document.getElementById('longBreak'),
+                    saveBtn: document.getElementById('saveBtn'),
+                    circleBg: document.querySelector('.circle-bg'),
+                    progressCircle: document.querySelector('.progress-ring-progress')
+                };
+
+                this.audioContext = null;
+                this.loadSettings();
+                this.bindEvents();
+                this.updateDisplay();
+                this.updateProgress();
+            }
+
+            loadSettings() {
+                const savedSettings = JSON.parse(localStorage.getItem('pomodoroSettings') || '{}');
+                
+                if (savedSettings.workTime) {
+                    this.workTime = savedSettings.workTime * 60;
+                    this.elements.workTimeInput.value = savedSettings.workTime;
+                }
+                if (savedSettings.shortBreak) {
+                    this.shortBreakTime = savedSettings.shortBreak * 60;
+                    this.elements.shortBreakInput.value = savedSettings.shortBreak;
+                }
+                if (savedSettings.longBreak) {
+                    this.longBreakTime = savedSettings.longBreak * 60;
+                    this.elements.longBreakInput.value = savedSettings.longBreak;
+                }
+                if (savedSettings.theme) {
+                    this.setTheme(savedSettings.theme);
+                }
+
+                this.currentTime = this.workTime;
+            }
+
+            saveSettings() {
+                const settings = {
+                    workTime: parseInt(this.elements.workTimeInput.value),
+                    shortBreak: parseInt(this.elements.shortBreakInput.value),
+                    longBreak: parseInt(this.elements.longBreakInput.value),
+                    theme: document.body.className.replace('theme-', '')
+                };
+
+                localStorage.setItem('pomodoroSettings', JSON.stringify(settings));
+
+                this.workTime = settings.workTime * 60;
+                this.shortBreakTime = settings.shortBreak * 60;
+                this.longBreakTime = settings.longBreak * 60;
+
+                if (this.isWorkSession) {
+                    this.currentTime = this.workTime;
+                } else {
+                    this.currentTime = this.sessionCount % 4 === 0 ? this.longBreakTime : this.shortBreakTime;
+                }
+
+                this.updateDisplay();
+                this.updateProgress();
+                
+                // Visual feedback
+                this.elements.saveBtn.textContent = '✅ Saved!';
+                setTimeout(() => {
+                    this.elements.saveBtn.textContent = '💾 Save Settings';
+                }, 2000);
+            }
+
+            setTheme(theme) {
+                document.body.className = `theme-${theme}`;
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme === theme);
+                });
+            }
+
+            bindEvents() {
+                this.elements.startBtn.addEventListener('click', () => this.start());
+                this.elements.pauseBtn.addEventListener('click', () => this.pause());
+                this.elements.resetBtn.addEventListener('click', () => this.reset());
+                this.elements.saveBtn.addEventListener('click', () => this.saveSettings());
+
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.setTheme(e.target.dataset.theme);
+                    });
+                });
+            }
+
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            updateDisplay() {
+                this.elements.timeDisplay.textContent = this.formatTime(this.currentTime);
+                this.elements.sessionCount.textContent = this.sessionCount;
+                this.elements.sessionType.textContent = this.isWorkSession ? 'Work' : 'Break';
+                this.elements.sessionLabel.textContent = this.isWorkSession ? 'Focus Time' : 'Break Time';
+                
+                // Update circle appearance
+                this.elements.circleBg.className = `circle-bg ${this.isWorkSession ? 'work' : 'break'}`;
+            }
+
+            updateProgress() {
+                const totalTime = this.isWorkSession ? this.workTime : 
+                    (this.sessionCount % 4 === 0 ? this.longBreakTime : this.shortBreakTime);
+                const progress = (totalTime - this.currentTime) / totalTime;
+                const circumference = 2 * Math.PI * 150;
+                const offset = circumference - (progress * circumference);
+                
+                this.elements.progressCircle.style.strokeDashoffset = offset;
+            }
+
+            async playNotificationSound() {
+                if (!this.audioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                // Create a notification sound
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
+                oscillator.frequency.setValueAtTime(600, this.audioContext.currentTime + 0.1);
+                oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime + 0.2);
+                
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.3);
+            }
+
+            start() {
+                if (!this.isRunning) {
+                    this.isRunning = true;
+                    this.elements.startBtn.disabled = true;
+                    this.elements.pauseBtn.disabled = false;
+                    
+                    this.timerInterval = setInterval(() => {
+                        this.currentTime--;
+                        this.updateDisplay();
+                        this.updateProgress();
+                        
+                        if (this.currentTime <= 0) {
+                            this.completeSession();
+                        }
+                    }, 1000);
+                }
+            }
+
+            pause() {
+                if (this.isRunning) {
+                    this.isRunning = false;
+                    this.elements.startBtn.disabled = false;
+                    this.elements.pauseBtn.disabled = true;
+                    
+                    if (this.timerInterval) {
+                        clearInterval(this.timerInterval);
+                        this.timerInterval = null;
+                    }
+                }
+            }
+
+            reset() {
+                this.pause();
+                this.currentTime = this.isWorkSession ? this.workTime : 
+                    (this.sessionCount % 4 === 0 ? this.longBreakTime : this.shortBreakTime);
+                this.updateDisplay();
+                this.updateProgress();
+            }
+
+            async completeSession() {
+                this.pause();
+                await this.playNotificationSound();
+                
+                if (this.isWorkSession) {
+                    // Work session completed, start break
+                    this.isWorkSession = false;
+                    this.currentTime = this.sessionCount % 4 === 0 ? this.longBreakTime : this.shortBreakTime;
+                } else {
+                    // Break completed, start next work session
+                    this.isWorkSession = true;
+                    this.sessionCount++;
+                    this.currentTime = this.workTime;
+                }
+                
+                this.updateDisplay();
+                this.updateProgress();
+                
+                // Auto-start next session
+                setTimeout(() => {
+                    this.start();
+                }, 1000);
+            }
+        }
+
+        // Initialize the timer when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PomodoroTimer();
+        });
+    </script>
+</body>
+</html>
